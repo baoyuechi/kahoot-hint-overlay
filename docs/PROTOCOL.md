@@ -33,6 +33,7 @@
 | `kc.ui.getConfig` | 扩展页面（`!sender.tab`） | `{ ok, public, secret(已脱敏), flags }` |
 | `kc.ui.savePublic` | 扩展页面 | `{ ok, public, flags }` |
 | `kc.ui.saveSecret` | 扩展页面 | `{ ok, secret(已脱敏), flags }` |
+| `kc.ui.testConnection` | 扩展页面 | `{ ok, method, models, url, latencyMs }` |
 | `kc.ui.listModels` | 扩展页面 | `{ ok, models, url }` |
 | `kc.config.changed` | 后台 → 内容脚本（`tabs.sendMessage`） | — |
 
@@ -55,6 +56,18 @@
 ```
 
 `kind` 取值：`single` / `multi` / `order` / `slider` / `short`。
+
+### 连接测试
+
+设置页的「测试连接」走 `kc.ui.testConnection`，本质是**请求该服务的模型目录接口**——它同时验证了地址可达、Key 有效，且不消耗任何生成额度。
+
+```json
+{ "type": "kc.ui.testConnection", "provider": "openai", "baseUrl": "https://api.openai.com", "apiKey": "sk-..." }
+```
+
+`apiKey` 留空时后台回落到已保存的 Key（设置页只写不读，因此无法回填）。Gemini 与 Anthropic 的目录接口必须带 Key，OpenAI 兼容端点允许空 Key（适配 Ollama 这类本机服务）。
+
+成功返回模型列表与耗时；失败返回标准错误对象，`httpStatus` 会一并带出，便于区分「Key 无效（401）」与「地址写错（404）」。
 
 ### 求解结果
 

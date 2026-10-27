@@ -109,6 +109,34 @@
       return { ok: true, secret: redactSecret(await store.getSecret()), flags: await store.secretFlags() };
     }
 
+    if (message.type === "kc.ui.testConnection") {
+      const provider = String(message.provider || "");
+      const baseUrl = String(message.baseUrl || "").trim();
+      const providedKey = String(message.apiKey || "").trim();
+
+      if (!baseUrl) throw new SolverError("invalid_endpoint", { message: "请先填写接口地址" });
+
+      // 输入框留空时回落到已保存的 Key（设置页只写不读）
+      const saved = await store.getSecret();
+      const prefix = provider === "openai" ? "openAi" : provider;
+      const apiKey = providedKey || String(saved[`${prefix}ApiKey`] || "");
+
+      // Gemini / Anthropic 的目录接口必须带 Key；OpenAI 兼容端点可能是本机无鉴权服务
+      if (provider !== "openai" && !apiKey) {
+        throw new SolverError("no_api_key", { message: "请先填写 API Key" });
+      }
+
+      const startedAt = Date.now();
+      const result = await ModelCatalog.list(provider, baseUrl, apiKey);
+      return {
+        ok: true,
+        method: "models",
+        models: result.models,
+        url: result.url,
+        latencyMs: Date.now() - startedAt
+      };
+    }
+
     if (message.type === "kc.ui.listModels") {
       const saved = await store.getSecret();
       const baseUrl = message.baseUrl || saved[`${message.provider === "openai" ? "openAi" : message.provider}BaseUrl`];

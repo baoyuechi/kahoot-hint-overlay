@@ -83,11 +83,19 @@
         <span class="preset-state" data-preset-state="openai"></span>
       </div>
       <label class="field"><span>接口地址</span><input data-secret="1" data-config="openAiBaseUrl" placeholder="https://api.openai.com"></label>
-      <label class="field"><span>API Key</span><input type="password" autocomplete="off" data-secret="1" data-config="openAiApiKey" placeholder="sk-…"></label>
+      <label class="field"><span>API Key</span>
+        <span class="secret-wrap">
+          <input type="password" autocomplete="off" spellcheck="false" data-secret="1" data-config="openAiApiKey" placeholder="sk-…">
+          <button type="button" class="eye" data-eye="openAiApiKey" aria-label="显示或隐藏 Key">显示</button>
+        </span>
+      </label>
       <label class="field"><span>模型</span><input data-secret="1" data-config="openAiModel" placeholder="gpt-4o-mini"></label>
       <label class="row"><input type="checkbox" data-secret="1" data-config="openAiTryNextModel"><span>模型失败时换下一个</span></label>
       <label class="row"><input type="checkbox" data-secret="1" data-config="openAiWebSearch"><span>使用联网搜索（/v1/responses）</span></label>
-      <button type="button" class="btn" data-load-models="openai">加载模型目录</button>
+      <div class="test-row">
+        <button type="button" class="btn" data-test="openai">测试连接</button>
+        <span class="test-status" data-test-status="openai"></span>
+      </div>
       <p class="hint" data-model-hint="openai"></p>
     </details>
 
@@ -98,11 +106,19 @@
         <span class="preset-state" data-preset-state="gemini"></span>
       </div>
       <label class="field"><span>接口地址</span><input data-secret="1" data-config="geminiBaseUrl"></label>
-      <label class="field"><span>API Key</span><input type="password" autocomplete="off" data-secret="1" data-config="geminiApiKey" placeholder="AIza…"></label>
+      <label class="field"><span>API Key</span>
+        <span class="secret-wrap">
+          <input type="password" autocomplete="off" spellcheck="false" data-secret="1" data-config="geminiApiKey" placeholder="AIza…">
+          <button type="button" class="eye" data-eye="geminiApiKey" aria-label="显示或隐藏 Key">显示</button>
+        </span>
+      </label>
       <label class="field"><span>模型(逗号分隔)</span><input data-secret="1" data-config="geminiModels"></label>
       <label class="row"><input type="checkbox" data-secret="1" data-config="geminiTryNextModel"><span>模型失败时换下一个</span></label>
       <label class="row"><input type="checkbox" data-secret="1" data-config="geminiWebSearch"><span>使用 Google 搜索</span></label>
-      <button type="button" class="btn" data-load-models="gemini">加载模型目录</button>
+      <div class="test-row">
+        <button type="button" class="btn" data-test="gemini">测试连接</button>
+        <span class="test-status" data-test-status="gemini"></span>
+      </div>
       <p class="hint" data-model-hint="gemini"></p>
     </details>
 
@@ -113,10 +129,18 @@
         <span class="preset-state" data-preset-state="anthropic"></span>
       </div>
       <label class="field"><span>接口地址</span><input data-secret="1" data-config="anthropicBaseUrl"></label>
-      <label class="field"><span>API Key</span><input type="password" autocomplete="off" data-secret="1" data-config="anthropicApiKey" placeholder="sk-ant-…"></label>
+      <label class="field"><span>API Key</span>
+        <span class="secret-wrap">
+          <input type="password" autocomplete="off" spellcheck="false" data-secret="1" data-config="anthropicApiKey" placeholder="sk-ant-…">
+          <button type="button" class="eye" data-eye="anthropicApiKey" aria-label="显示或隐藏 Key">显示</button>
+        </span>
+      </label>
       <label class="field"><span>模型</span><input data-secret="1" data-config="anthropicModel"></label>
       <label class="row"><input type="checkbox" data-secret="1" data-config="anthropicWebSearch"><span>使用联网搜索</span></label>
-      <button type="button" class="btn" data-load-models="anthropic">加载模型目录</button>
+      <div class="test-row">
+        <button type="button" class="btn" data-test="anthropic">测试连接</button>
+        <span class="test-status" data-test-status="anthropic"></span>
+      </div>
       <p class="hint" data-model-hint="anthropic"></p>
     </details>
   </section>

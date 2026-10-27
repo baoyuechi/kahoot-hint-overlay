@@ -245,51 +245,119 @@
     saveTimer = setTimeout(() => persist(control), 300);
   }
 
-  async function loadModels(button) {
-    const provider = button.dataset.loadModels;
+  function providerFields(provider) {
     const prefix = provider === "openai" ? "openAi" : provider;
-    const baseUrlControl = document.querySelector(`[data-config="${prefix}BaseUrl"]`);
-    const keyControl = document.querySelector(`[data-config="${prefix}ApiKey"]`);
-    const hint = document.querySelector(`[data-model-hint="${provider}"]`);
-    hint.className = "hint";
-    hint.textContent = "正在加载模型目录…";
+    return {
+      prefix,
+      baseUrl: document.querySelector(`[data-config="${prefix}BaseUrl"]`),
+      apiKey: document.querySelector(`[data-config="${prefix}ApiKey"]`),
+      hint: document.querySelector(`[data-model-hint="${provider}"]`),
+      button: document.querySelector(`[data-test="${provider}"]`)
+    };
+  }
+
+  function setTestStatus(provider, text, tone) {
+    const element = document.querySelector(`[data-test-status="${provider}"]`);
+    if (!element) return;
+    element.textContent = text;
+    element.dataset.tone = tone || "";
+  }
+
+  function refreshTestButtons() {
+    for (const protocol of PROTOCOLS) {
+      const fields = providerFields(protocol);
+      if (!fields.button) continue;
+      const hasSavedKey = Boolean(state.flags && state.flags[KEY_FIELDS[`${fields.prefix}ApiKey`]]);
+      const needsKey = protocol !== "openai";
+      const hasKey = !needsKey || Boolean(fields.apiKey && fields.apiKey.value.trim()) || hasSavedKey;
+      const hasBase = Boolean(fields.baseUrl && fields.baseUrl.value.trim());
+      fields.button.disabled = !(hasKey && hasBase);
+      fields.button.title = !hasBase
+        ? "先填写接口地址"
+        : !hasKey
+          ? "先填写 API Key"
+          : "用该服务的模型目录接口验证地址与 Key 是否可用";
+    }
+  }
+
+  async function applyDiscoveredModels(provider, models) {
+    if (!models.length) return;
+    if (provider === "gemini") {
+      const control = document.querySelector('[data-config="geminiModels"]');
+      if (control) {
+        control.value = models.join(", ");
+        await persist(control);
+      }
+      return;
+    }
+    const key = provider === "openai" ? "openAiModel" : "anthropicModel";
+    const control = document.querySelector(`[data-config="${key}"]`);
+    if (control && !control.value.trim()) {
+      control.value = models[0];
+      await persist(control);
+    }
+  }
+
+  async function testConnection(button) {
+    const provider = button.dataset.test;
+    const fields = providerFields(provider);
+    const baseUrl = fields.baseUrl ? fields.baseUrl.value.trim() : "";
+    const apiKey = fields.apiKey ? fields.apiKey.value.trim() : "";
+
+    button.disabled = true;
+    setTestStatus(provider, "正在请求模型目录…", "busy");
+    if (fields.hint) {
+      fields.hint.className = "hint";
+      fields.hint.textContent = "";
+    }
 
     try {
-      const response = await send({
-        type: "kc.ui.listModels",
-        provider,
-        baseUrl: baseUrlControl ? baseUrlControl.value.trim() : "",
-        apiKey: keyControl ? keyControl.value.trim() : ""
-      });
+      const response = await send({ type: "kc.ui.testConnection", provider, baseUrl, apiKey });
       if (!response || response.ok === false) {
-        throw new Error((response && response.error && response.error.message) || "加载失败");
+        const info = (response && response.error) || {};
+        throw new Error(info.message || "连接失败");
       }
-      hint.className = "hint ok";
-      hint.textContent = `共 ${response.models.length} 个模型：${response.models.slice(0, 6).join(", ")}${response.models.length > 6 ? " …" : ""}`;
-
-      if (provider === "openai") {
-        const modelControl = document.querySelector('[data-config="openAiModel"]');
-        if (modelControl && !modelControl.value.trim() && response.models.length) {
-          modelControl.value = response.models[0];
-          await persist(modelControl);
-        }
-      } else if (provider === "gemini") {
-        const modelsControl = document.querySelector('[data-config="geminiModels"]');
-        if (modelsControl) {
-          modelsControl.value = response.models.join(", ");
-          await persist(modelsControl);
-        }
-      } else {
-        const modelControl = document.querySelector('[data-config="anthropicModel"]');
-        if (modelControl && !modelControl.value.trim() && response.models.length) {
-          modelControl.value = response.models[0];
-          await persist(modelControl);
-        }
+      const models = response.models || [];
+      setTestStatus(provider, `连接正常 · ${models.length} 个模型 · ${response.latencyMs}ms`, "ok");
+      if (fields.hint) {
+        fields.hint.className = "hint ok";
+        fields.hint.textContent = `可用模型：${models.slice(0, 6).join(", ")}${models.length > 6 ? " …" : ""}`;
       }
+      await applyDiscoveredModels(provider, models);
     } catch (error) {
-      hint.className = "hint err";
-      hint.textContent = String(error.message || error);
+      setTestStatus(provider, String(error.message || error), "err");
+    } finally {
+      button.disabled = false;
+      refreshTestButtons();
     }
+  }
+
+  function setupEyes() {
+    const maskAll = () => {
+      for (const button of document.querySelectorAll("[data-eye]")) {
+        button.dataset.on = "0";
+        button.textContent = "显示";
+        const input = document.querySelector(`[data-config="${button.dataset.eye}"]`);
+        if (input) input.type = "password";
+      }
+    };
+
+    for (const button of document.querySelectorAll("[data-eye]")) {
+      const input = document.querySelector(`[data-config="${button.dataset.eye}"]`);
+      if (!input) continue;
+      button.addEventListener("click", () => {
+        const showing = button.dataset.on === "1";
+        button.dataset.on = showing ? "0" : "1";
+        button.textContent = showing ? "显示" : "隐藏";
+        input.type = showing ? "password" : "text";
+      });
+    }
+
+    // 切走面板就重新遮住，避免 Key 停在明文状态
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) maskAll();
+    });
+    window.addEventListener("blur", maskAll);
   }
 
   function reloadTab() {
@@ -317,8 +385,16 @@
       }
     }
 
-    for (const button of document.querySelectorAll("[data-load-models]")) {
-      button.addEventListener("click", () => loadModels(button));
+    setupEyes();
+
+    for (const button of document.querySelectorAll("[data-test]")) {
+      button.addEventListener("click", () => testConnection(button));
+    }
+    for (const protocol of PROTOCOLS) {
+      const fields = providerFields(protocol);
+      for (const control of [fields.baseUrl, fields.apiKey]) {
+        if (control) control.addEventListener("input", refreshTestButtons);
+      }
     }
     document.getElementById("reload").addEventListener("click", reloadTab);
 
@@ -333,6 +409,7 @@
       renderRegion();
       setStatus("就绪", "");
       await prefillBaseUrls();
+      refreshTestButtons();
     } catch (error) {
       setStatus(String(error.message || error), "err");
     }
