@@ -5,6 +5,27 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 dist="$root/dist"
 mode="${1:-release}"
 
+# 版本号在三个文件里各写一次，手改容易漏；不一致就别打包
+check_versions() {
+  node -e '
+    const fs = require("fs");
+    const dir = process.argv[1];
+    const files = ["package.json", "manifest.chrome.json", "manifest.firefox.json"];
+    const versions = files.map((name) => {
+      const json = JSON.parse(fs.readFileSync(`${dir}/${name}`, "utf8"));
+      return { name, version: json.version };
+    });
+    const unique = [...new Set(versions.map((item) => item.version))];
+    if (unique.length !== 1) {
+      console.error("版本号不一致，已中止打包：");
+      for (const item of versions) console.error(`  ${item.name}: ${item.version}`);
+      process.exit(1);
+    }
+  ' "$root"
+}
+
+check_versions
+
 read_meta() {
   node -e '
     const fs = require("fs");

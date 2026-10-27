@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Quiz Hint Overlay",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Show-only overlay: reads the live question from page frames and displays an answer from your own AI endpoint. Never clicks for you.",
   "browser_specific_settings": {
     "gecko": {
