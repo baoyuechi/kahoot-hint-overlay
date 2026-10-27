@@ -1,0 +1,79 @@
+{
+  "manifest_version": 2,
+  "name": "Quiz Hint Overlay",
+  "version": "0.1.0",
+  "description": "Show-only overlay: reads the live question from page frames and displays an answer from your own AI endpoint. Never clicks for you.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "quiz-hint-overlay@local",
+      "strict_min_version": "115.0"
+    }
+  },
+  "permissions": [
+    "storage",
+    "https://kahoot.it/*",
+    "https://*.kahoot.it/*"
+  ],
+  "optional_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "scripts": [
+      "src/core/namespace.js",
+      "src/core/text.js",
+      "src/core/config.js",
+      "src/core/errors.js",
+      "src/core/prompt.js",
+      "src/core/answer-parser.js",
+      "src/background/http.js",
+      "src/background/config-store.js",
+      "src/background/providers/openai.js",
+      "src/background/providers/gemini.js",
+      "src/background/providers/anthropic.js",
+      "src/background/ai-router.js",
+      "src/background/model-catalog.js",
+      "src/background/main.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://kahoot.it/*", "https://*.kahoot.it/*"],
+      "js": [
+        "src/core/namespace.js",
+        "src/core/text.js",
+        "src/core/config.js",
+        "src/core/errors.js",
+        "src/core/question-event.js",
+        "src/core/dom-reader.js",
+        "src/core/queue.js",
+        "src/core/dedupe.js",
+        "src/core/solve-request.js",
+        "src/core/prompt.js",
+        "src/core/answer-parser.js",
+        "src/core/view-model.js",
+        "src/core/pipeline.js",
+        "src/adapters/registry.js",
+        "src/adapters/kahoot/dom-profile.js",
+        "src/adapters/kahoot/extractor.js",
+        "src/adapters/kahoot/frame-source.js",
+        "src/adapters/kahoot/index.js",
+        "src/content/logger.js",
+        "src/content/messages.js",
+        "src/content/page-bridge.js",
+        "src/content/config-client.js",
+        "src/content/solver-client.js",
+        "src/content/presenter.js",
+        "src/content/content.js"
+      ],
+      "css": ["src/content/presenter.css"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "browser_action": {
+    "default_title": "Quiz Hint Overlay",
+    "default_popup": "src/ui/popup.html"
+  },
+  "web_accessible_resources": ["src/page/page-hook.js"]
+}

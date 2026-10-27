@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quiz Hint Overlay</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="head">
+    <div>
+      <h1>Quiz Hint Overlay</h1>
+      <p class="sub">只显示答案，不会替你点击</p>
+    </div>
+    <label class="switch">
+      <input type="checkbox" data-config="enabled">
+      <span>启用</span>
+    </label>
+  </header>
+
+  <section class="panel">
+    <h2>行为</h2>
+    <label class="row"><input type="checkbox" data-config="autoSolve"><span>拿到题干后自动求解</span></label>
+    <label class="row"><input type="checkbox" data-config="placeholderNotice"><span>选项无法定位时显示提示</span></label>
+    <div class="grid">
+      <label class="field"><span>同题冷却 (ms)</span><input type="number" min="0" step="500" data-config="cooldownMs"></label>
+      <label class="field"><span>队列容量</span><input type="number" min="1" max="16" data-config="queueCapacity"></label>
+      <label class="field"><span>求解超时 (ms)</span><input type="number" min="1000" step="1000" data-config="solveTimeoutMs"></label>
+      <label class="field"><span>失败重试次数</span><input type="number" min="0" max="3" data-config="retryCount"></label>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>浮层</h2>
+    <div class="grid">
+      <label class="field"><span>位置</span>
+        <select data-config="overlayCorner">
+          <option value="bottom-right">右下</option>
+          <option value="bottom-left">左下</option>
+          <option value="top-right">右上</option>
+          <option value="top-left">左上</option>
+        </select>
+      </label>
+      <label class="field"><span>宽度 (px)</span><input type="number" min="220" max="560" step="10" data-config="overlayMaxWidth"></label>
+    </div>
+    <label class="row"><input type="checkbox" data-config="showReason"><span>显示模型理由</span></label>
+    <label class="row"><input type="checkbox" data-config="showConfidence"><span>显示置信度</span></label>
+    <label class="row"><input type="checkbox" data-config="showModel"><span>显示模型名</span></label>
+  </section>
+
+  <section class="panel">
+    <h2>模型</h2>
+    <label class="field"><span>优先 Provider</span>
+      <select data-config="preferredProvider" data-secret="1">
+        <option value="auto">自动降级</option>
+        <option value="openai">OpenAI 兼容优先</option>
+        <option value="gemini">Gemini 优先</option>
+        <option value="anthropic">Anthropic 优先</option>
+      </select>
+    </label>
+
+    <details open>
+      <summary>OpenAI 兼容</summary>
+      <label class="field"><span>接口地址</span><input data-secret="1" data-config="openAiBaseUrl" placeholder="https://api.openai.com"></label>
+      <label class="field"><span>API Key</span><input type="password" autocomplete="off" data-secret="1" data-config="openAiApiKey" placeholder="sk-…"></label>
+      <label class="field"><span>模型</span><input data-secret="1" data-config="openAiModel" placeholder="gpt-4o-mini"></label>
+      <label class="row"><input type="checkbox" data-secret="1" data-config="openAiTryNextModel"><span>模型失败时换下一个</span></label>
+      <label class="row"><input type="checkbox" data-secret="1" data-config="openAiWebSearch"><span>使用联网搜索（/v1/responses）</span></label>
+      <button type="button" class="btn" data-load-models="openai">加载模型目录</button>
+      <p class="hint" data-model-hint="openai"></p>
+    </details>
+
+    <details>
+      <summary>Gemini 兼容</summary>
+      <label class="field"><span>接口地址</span><input data-secret="1" data-config="geminiBaseUrl"></label>
+      <label class="field"><span>API Key</span><input type="password" autocomplete="off" data-secret="1" data-config="geminiApiKey" placeholder="AIza…"></label>
+      <label class="field"><span>模型(逗号分隔)</span><input data-secret="1" data-config="geminiModels"></label>
+      <label class="row"><input type="checkbox" data-secret="1" data-config="geminiTryNextModel"><span>模型失败时换下一个</span></label>
+      <label class="row"><input type="checkbox" data-secret="1" data-config="geminiWebSearch"><span>使用 Google 搜索</span></label>
+      <button type="button" class="btn" data-load-models="gemini">加载模型目录</button>
+      <p class="hint" data-model-hint="gemini"></p>
+    </details>
+
+    <details>
+      <summary>Anthropic Messages 兼容</summary>
+      <label class="field"><span>接口地址</span><input data-secret="1" data-config="anthropicBaseUrl"></label>
+      <label class="field"><span>API Key</span><input type="password" autocomplete="off" data-secret="1" data-config="anthropicApiKey" placeholder="sk-ant-…"></label>
+      <label class="field"><span>模型</span><input data-secret="1" data-config="anthropicModel"></label>
+      <label class="row"><input type="checkbox" data-secret="1" data-config="anthropicWebSearch"><span>使用联网搜索</span></label>
+      <button type="button" class="btn" data-load-models="anthropic">加载模型目录</button>
+      <p class="hint" data-model-hint="anthropic"></p>
+    </details>
+  </section>
+
+  <section class="panel">
+    <h2>高级</h2>
+    <label class="row"><input type="checkbox" data-config="debug"><span>调试日志</span></label>
+    <label class="row"><input type="checkbox" data-config="mockSolver"><span>Mock 求解（不联网，用于验证链路）</span></label>
+    <p class="hint">改动保存后需要刷新 Kahoot 页面才会完全生效。</p>
+  </section>
+
+  <footer class="foot">
+    <span id="status" role="status"></span>
+    <button type="button" id="reload" class="btn ghost">重新加载当前页</button>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

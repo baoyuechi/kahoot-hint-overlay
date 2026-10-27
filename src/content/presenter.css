@@ -1,0 +1,36 @@
+/*
+ * 浮层宿主样式。卡片内部样式放在 Shadow DOM 里，见 presenter.js。
+ * 这里只负责宿主的位置与层级，全部 !important 以对抗站点样式。
+ */
+#kc-host {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  pointer-events: none !important;
+  right: 12px !important;
+  bottom: 12px !important;
+  top: auto !important;
+  left: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: none !important;
+  transform: none !important;
+  contain: layout style !important;
+}
+
+#kc-host[data-corner="bottom-left"] {
+  left: 12px !important;
+  right: auto !important;
+}
+
+#kc-host[data-corner="top-right"] {
+  top: 12px !important;
+  bottom: auto !important;
+}
+
+#kc-host[data-corner="top-left"] {
+  top: 12px !important;
+  bottom: auto !important;
+  left: 12px !important;
+  right: auto !important;
+}

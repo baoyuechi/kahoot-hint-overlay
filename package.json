@@ -1,0 +1,10 @@
+{
+  "name": "quiz-hint-overlay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Show-only overlay that reads the live question from page frames and displays an LLM answer. No auto-clicking, no quiz bank, no camera.",
+  "scripts": {
+    "test": "node --test test/unit/*.test.js",
+    "build": "./build.sh"
+  }
+}

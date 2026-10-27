@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Quiz Hint · mock 页</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="mock-ws.js"></script>
+  <style>
+    :root { color-scheme: light; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #1b1d23;
+      background: #f4f5f7;
+    }
+    h1 { font-size: 18px; margin: 0 0 4px; }
+    p.lead { margin: 0 0 18px; color: #6b7280; font-size: 13px; }
+    .board {
+      max-width: 720px;
+      background: #4c3fa8;
+      border-radius: 12px;
+      padding: 22px;
+      color: #fff;
+    }
+    #question {
+      font-size: 20px;
+      font-weight: 600;
+      min-height: 30px;
+      margin-bottom: 18px;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .answer {
+      border: 0;
+      border-radius: 8px;
+      padding: 16px 14px;
+      font: inherit;
+      font-weight: 600;
+      color: #fff;
+      cursor: pointer;
+      text-align: left;
+    }
+    .answer[data-functional-selector="answer-0"] { background: #e0245e; }
+    .answer[data-functional-selector="answer-1"] { background: #1d6fe0; }
+    .answer[data-functional-selector="answer-2"] { background: #e0a91d; color: #2a2100; }
+    .answer[data-functional-selector="answer-3"] { background: #1d9e75; }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip: rect(0 0 0 0); white-space: nowrap;
+    }
+    .controls { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; max-width: 720px; }
+    button.ctl {
+      padding: 7px 12px;
+      border: 1px solid #d0d3d9;
+      border-radius: 6px;
+      background: #fff;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    button.ctl:hover { border-color: #2563eb; color: #2563eb; }
+    .log {
+      max-width: 720px;
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid #e3e5e9;
+      border-radius: 8px;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #4b5563;
+      max-height: 160px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Quiz Hint · mock 页</h1>
+  <p class="lead">这个页面自己替换了 WebSocket，用按钮主动推送帧。用于验证「帧 → 解析 → 浮层」整条链路。</p>
+
+  <div class="board">
+    <div id="question">（等待题目）</div>
+    <div class="grid">
+      <button class="answer" data-functional-selector="answer-0" type="button">
+        <span class="sr-only" data-answer-text="Saturn">Saturn</span>Saturn
+      </button>
+      <button class="answer" data-functional-selector="answer-1" type="button">
+        <span class="sr-only" data-answer-text="Jupiter">Jupiter</span>Jupiter
+      </button>
+      <button class="answer" data-functional-selector="answer-2" type="button">
+        <span class="sr-only" data-answer-text="Mars">Mars</span>Mars
+      </button>
+      <button class="answer" data-functional-selector="answer-3" type="button">
+        <span class="sr-only" data-answer-text="Venus">Venus</span>Venus
+      </button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="ctl" data-act="connect">建立连接</button>
+    <button class="ctl" data-act="question">发题 (Q1)</button>
+    <button class="ctl" data-act="reveal">发答案帧 (Q1)</button>
+    <button class="ctl" data-act="placeholder">发占位符题</button>
+    <button class="ctl" data-act="repeat">连发 5 帧同题</button>
+    <button class="ctl" data-act="burst">连发 3 道不同题</button>
+    <button class="ctl" data-act="bad">发坏 JSON</button>
+    <button class="ctl" data-act="reset">清空日志</button>
+  </div>
+
+  <div class="log" id="log">就绪。</div>
+
+  <script src="fixtures.js"></script>
+  <script>
+    (function () {
+      const logEl = document.getElementById("log");
+      const questionEl = document.getElementById("question");
+
+      function log(line) {
+        const stamp = new Date().toLocaleTimeString();
+        logEl.textContent = `[${stamp}] ${line}\n${logEl.textContent}`.slice(0, 4000);
+      }
+
+      function ensureSocket() {
+        if (!window.__mock.sockets.length) {
+          new WebSocket("wss://kahoot.it/cometd/live/mock");
+        }
+        return window.__mock.sockets[window.__mock.sockets.length - 1];
+      }
+
+      document.querySelector('[data-act="connect"]').addEventListener("click", () => {
+        ensureSocket();
+        log("socket 已建立");
+      });
+
+      document.querySelector('[data-act="question"]').addEventListener("click", () => {
+        ensureSocket();
+        questionEl.textContent = KCFixtures.QUIZ[0].question;
+        window.__mock.replay(KCFixtures.questionFrame(0));
+        log("已发送 Q1 题干帧");
+      });
+
+      document.querySelector('[data-act="reveal"]').addEventListener("click", () => {
+        ensureSocket();
+        window.__mock.replay(KCFixtures.revealFrame(0));
+        log("已发送 Q1 答案帧");
+      });
+
+      document.querySelector('[data-act="placeholder"]').addEventListener("click", () => {
+        ensureSocket();
+        questionEl.textContent = KCFixtures.QUIZ[0].question;
+        window.__mock.replay(KCFixtures.placeholderFrame(0));
+        log("已发送占位符题（选项只剩 answer-0..3）");
+      });
+
+      document.querySelector('[data-act="repeat"]').addEventListener("click", () => {
+        ensureSocket();
+        for (let i = 0; i < 5; i += 1) window.__mock.replay(KCFixtures.questionFrame(0));
+        log("已连发 5 帧同一道题，期望只发起 1 次求解");
+      });
+
+      document.querySelector('[data-act="burst"]').addEventListener("click", () => {
+        ensureSocket();
+        [0, 1, 2].forEach((index, offset) => {
+          setTimeout(() => {
+            questionEl.textContent = KCFixtures.QUIZ[index].question;
+            window.__mock.replay(KCFixtures.questionFrame(index));
+            log(`已发送 Q${index + 1}`);
+          }, offset * 120);
+        });
+      });
+
+      document.querySelector('[data-act="bad"]').addEventListener("click", () => {
+        ensureSocket();
+        window.__mock.raw(KCFixtures.badJson());
+        log("已发送坏 JSON，页面不应报错");
+      });
+
+      document.querySelector('[data-act="reset"]').addEventListener("click", () => {
+        logEl.textContent = "就绪。";
+      });
+
+      ensureSocket();
+      log("mock socket 已自动建立");
+
+      // ?auto=1：无人值守冒烟测试。把浮层（Shadow DOM，mode:open）里的文本镜像到 light DOM，
+      // 这样 headless 的 --dump-dom 能读到。
+      if (new URLSearchParams(location.search).get("auto") === "1") {
+        setTimeout(() => {
+          ensureSocket();
+          window.__mock.replay(KCFixtures.questionFrame(0));
+          setTimeout(() => {
+            const host = document.getElementById("kc-host");
+            const shadow = host && host.shadowRoot;
+            const text = shadow ? shadow.textContent.replace(/\s+/g, " ").trim() : "NO_HOST";
+            const out = document.createElement("div");
+            out.id = "kc-smoke";
+            out.textContent = `SMOKE:hook=${typeof window.__KC_HOOK_V1__}|host=${Boolean(host)}|${text}`;
+            document.body.appendChild(out);
+          }, 1400);
+        }, 300);
+      }
+    })();
+  </script>
+</body>
+</html>
