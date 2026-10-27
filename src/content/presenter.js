@@ -55,7 +55,7 @@
 <div class="card" data-phase="idle">
   <div class="bar">
     <span class="dot"></span>
-    <span class="label">Quiz Hint</span>
+    <span class="label">Kahoot Hint</span>
     <span class="idx"></span>
     <button class="close" type="button" title="隐藏（下一题自动恢复）">×</button>
   </div>

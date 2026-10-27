@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
-  "name": "Quiz Hint Overlay",
-  "version": "0.2.0",
+  "name": "Kahoot Hint Overlay",
+  "version": "0.2.1",
   "description": "Show-only overlay: reads the live question from page frames and displays an answer from your own AI endpoint. Never clicks for you.",
   "browser_specific_settings": {
     "gecko": {
@@ -72,7 +72,7 @@
     }
   ],
   "browser_action": {
-    "default_title": "Quiz Hint Overlay",
+    "default_title": "Kahoot Hint Overlay",
     "default_popup": "src/ui/popup.html"
   },
   "web_accessible_resources": ["src/page/page-hook.js"]

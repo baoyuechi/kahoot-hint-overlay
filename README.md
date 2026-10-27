@@ -1,4 +1,4 @@
-# Quiz Hint Overlay
+# Kahoot Hint Overlay
 
 一个**只读展示**的浏览器扩展：从页面 WebSocket 帧里截获题干，发给你自己的大模型接口，然后把答案显示在页面右下角的浮层里——**由你自己决定点不点**。
 
@@ -31,12 +31,12 @@
 
 ### Chrome / Edge
 
-1. `./build.sh` 生成 `dist/quiz-hint-overlay-chrome-<版本>.zip`，解压
+1. `./build.sh` 生成 `dist/kahoot-hint-overlay-chrome-<版本>.zip`，解压
 2. `chrome://extensions` → 打开开发者模式 → 加载已解压的扩展程序 → 选择解压目录
 
 ### Firefox
 
-1. `./build.sh` 生成 `dist/quiz-hint-overlay-firefox-<版本>.zip`，解压
+1. `./build.sh` 生成 `dist/kahoot-hint-overlay-firefox-<版本>.zip`，解压
 2. `about:debugging#/runtime/this-firefox` → 临时载入附加组件 → 选择 `manifest.json`
 
 > 也可以直接用 Releases 页里打包好的 zip，省去自己构建。
