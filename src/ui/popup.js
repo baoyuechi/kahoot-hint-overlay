@@ -14,9 +14,134 @@
   const statusEl = document.getElementById("status");
   const controls = Array.from(document.querySelectorAll("[data-config]"));
   const KEY_FIELDS = { openAiApiKey: "hasOpenAiKey", geminiApiKey: "hasGeminiKey", anthropicApiKey: "hasAnthropicKey" };
+  const P = window.ProviderPresets;
+  const PROTOCOLS = ["openai", "gemini", "anthropic"];
 
   let state = { public: {}, secret: {}, flags: {} };
   let saveTimer = null;
+
+  function prefixFor(protocol) {
+    return protocol === "openai" ? "openAi" : protocol;
+  }
+
+  function baseUrlControl(protocol) {
+    return document.querySelector(`[data-config="${prefixFor(protocol)}BaseUrl"]`);
+  }
+
+  function setupPresets() {
+    if (!P) return;
+
+    for (const protocol of PROTOCOLS) {
+      const select = document.querySelector(`[data-preset="${protocol}"]`);
+      if (!select) continue;
+      for (const preset of P.presetsFor(protocol)) {
+        const option = document.createElement("option");
+        option.value = preset.id;
+        option.textContent = preset.label;
+        select.appendChild(option);
+      }
+      select.addEventListener("change", () => {
+        const preset = P.getPreset(select.value);
+        if (!preset) return;
+        const input = baseUrlControl(protocol);
+        if (!input) return;
+        input.value = preset.baseUrl;
+        select.value = "";
+        renderPresetStates();
+        persist(input);
+        setStatus(`已填入 ${preset.label} 官方地址，可直接修改`, "ok");
+      });
+    }
+
+    const regionSelect = document.getElementById("regionCode");
+    if (regionSelect) {
+      for (const region of P.REGIONS) {
+        const option = document.createElement("option");
+        option.value = region.code;
+        option.textContent = region.label;
+        regionSelect.appendChild(option);
+      }
+    }
+  }
+
+  function renderPresetStates() {
+    if (!P) return;
+    for (const protocol of PROTOCOLS) {
+      const input = baseUrlControl(protocol);
+      const badge = document.querySelector(`[data-preset-state="${protocol}"]`);
+      if (!input || !badge) continue;
+
+      const value = input.value.trim();
+      if (!value) {
+        badge.textContent = "未设置";
+        badge.dataset.tone = "muted";
+        continue;
+      }
+      const match = P.presetsFor(protocol).find((preset) => preset.baseUrl === value);
+      if (match) {
+        badge.textContent = `官方地址 · ${match.label}`;
+        badge.dataset.tone = "ok";
+      } else {
+        badge.textContent = "自定义地址";
+        badge.dataset.tone = "custom";
+      }
+    }
+  }
+
+  async function prefillBaseUrls() {
+    if (!P) return;
+    const touched = [];
+    for (const protocol of PROTOCOLS) {
+      const input = baseUrlControl(protocol);
+      if (!input || input.value.trim()) continue;
+      const id = P.defaultPresetId(protocol);
+      const preset = id ? P.getPreset(id) : null;
+      if (!preset) continue;
+      input.value = preset.baseUrl;
+      touched.push(input);
+    }
+    for (const input of touched) await persist(input);
+    if (touched.length) setStatus("已预填官方地址（可随时修改）", "ok");
+  }
+
+  function renderRegion() {
+    if (!P) return;
+    const summaryEl = document.getElementById("regionSummary");
+    const list = document.getElementById("regionList");
+    if (!summaryEl || !list) return;
+
+    const report = P.regionReport(state.public.regionCode || "auto");
+    summaryEl.textContent = report.summary;
+    summaryEl.className = "hint";
+
+    list.replaceChildren(
+      ...report.rows.map((row) => {
+        const li = document.createElement("li");
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.dataset.level = row.level;
+
+        const body = document.createElement("div");
+        const title = document.createElement("strong");
+        title.textContent = row.label;
+        const text = document.createElement("div");
+        text.textContent = row.text;
+        const src = document.createElement("span");
+        src.className = "src";
+        src.textContent = `${row.sourceLabel} · 核对 ${row.checkedAt} `;
+        const link = document.createElement("a");
+        link.href = row.sourceUrl;
+        link.target = "_blank";
+        link.rel = "noreferrer noopener";
+        link.textContent = "打开来源";
+        src.appendChild(link);
+
+        body.append(title, document.createTextNode(" "), text, src);
+        li.append(dot, body);
+        return li;
+      })
+    );
+  }
 
   function send(message) {
     return new Promise((resolve, reject) => {
@@ -107,6 +232,9 @@
       if (response.secret) state.secret = response.secret;
       if (response.flags) state.flags = response.flags;
       setStatus("已保存", "ok");
+
+      if (key === "regionCode") renderRegion();
+      if (key.endsWith("BaseUrl")) renderPresetStates();
     } catch (error) {
       setStatus(String(error.message || error), "err");
     }
@@ -176,9 +304,14 @@
   }
 
   async function init() {
+    setupPresets();
+
     for (const control of controls) {
       const event = control.type === "checkbox" || control.tagName === "SELECT" ? "change" : "input";
       control.addEventListener(event, () => scheduleSave(control));
+      if (control.dataset.config && control.dataset.config.endsWith("BaseUrl")) {
+        control.addEventListener("input", renderPresetStates);
+      }
       if (KEY_FIELDS[control.dataset.config]) {
         control.dataset.placeholder = control.getAttribute("placeholder") || "";
       }
@@ -196,7 +329,10 @@
       state.secret = response.secret || {};
       state.flags = response.flags || {};
       render();
+      renderPresetStates();
+      renderRegion();
       setStatus("就绪", "");
+      await prefillBaseUrls();
     } catch (error) {
       setStatus(String(error.message || error), "err");
     }

@@ -11,6 +11,7 @@
     enabled: true,
     autoSolve: true,
     adapterId: "auto",
+    regionCode: "auto",
     cooldownMs: 8000,
     minCallIntervalMs: 500,
     queueCapacity: 4,
@@ -107,6 +108,11 @@
     if (!Object.prototype.hasOwnProperty.call(DEFAULT_CONFIG, key)) return undefined;
 
     if (key.endsWith("BaseUrl")) return endpoint(value);
+
+    if (key === "regionCode") {
+      const code = String(value || "auto").trim().toUpperCase();
+      return /^(AUTO|OTHER|[A-Z]{2})$/.test(code) ? code : "auto";
+    }
 
     if (ENUMS[key]) {
       const candidate = String(value || "").toLowerCase();

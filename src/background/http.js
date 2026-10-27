@@ -55,13 +55,18 @@
   }
 
   class ApiUrl {
+    /**
+     * 拼接 API 路径。
+     * 有些服务商的 base 里已经带了版本段（例如 GLM 的 /api/paas/v4、Groq 的 /openai/v1），
+     * 这种情况下不能再补一次 /v1，否则会拼出 /paas/v4/v1/chat/completions 这种 404 路径。
+     */
     static joinVersion(baseUrl, version, path) {
       const base = Config.endpoint(baseUrl).replace(/\/+$/, "");
       if (!/^https?:\/\//i.test(base)) {
         throw new SolverError("invalid_endpoint", { message: "接口地址需要以 http:// 或 https:// 开头" });
       }
-      const suffix = new RegExp(`/${version}$`, "i");
-      return `${suffix.test(base) ? base : `${base}/${version}`}/${String(path || "").replace(/^\/+/, "")}`;
+      const alreadyVersioned = /\/v\d+[a-z0-9]*$/i.test(base);
+      return `${alreadyVersioned ? base : `${base}/${version}`}/${String(path || "").replace(/^\/+/, "")}`;
     }
   }
 
