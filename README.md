@@ -31,19 +31,21 @@
 
 ### Chrome / Edge
 
-1. `./build.sh` 生成 `dist/chrome.zip`，解压
+1. `./build.sh` 生成 `dist/quiz-hint-overlay-chrome-<版本>.zip`，解压
 2. `chrome://extensions` → 打开开发者模式 → 加载已解压的扩展程序 → 选择解压目录
 
 ### Firefox
 
-1. `./build.sh` 生成 `dist/firefox.zip`，解压
+1. `./build.sh` 生成 `dist/quiz-hint-overlay-firefox-<版本>.zip`，解压
 2. `about:debugging#/runtime/this-firefox` → 临时载入附加组件 → 选择 `manifest.json`
+
+> 也可以直接用 Releases 页里打包好的 zip，省去自己构建。
 
 ## 配置
 
 点击工具栏图标，按需填任意一家：
 
-- **OpenAI 兼容**：接口地址 + Key + 模型（可点「加载模型目录」自动发现）
+- **OpenAI 兼容**：接口地址 + Key + 模型（填完点「测试连接」可顺便拉取模型列表）
 - **Gemini 兼容**：接口地址 + Key + 模型
 - **Anthropic Messages 兼容**：接口地址 + Key + 模型
 
@@ -68,7 +70,7 @@ API Key 只存在后台上下文，**内容脚本永远拿不到**（`kc.config.
 
 1. **地址来自官方文档**，每条都记了 `docsUrl` 与核对日期（`src/core/provider-presets.js` 里的 `CHECKED_AT`）。地址不做"看起来对"的猜测——比如 Groq 必须带 `/openai` 段，写成 `https://api.groq.com/v1` 会 404。
 2. **预填不等于锁死**。首次打开时地址为空会自动填入默认预设；一旦你改过，之后不会再被覆盖。地址右侧常驻状态标记：`官方地址 · OpenAI` 或 `自定义地址`。
-3. **不预填模型名**。模型 ID 的变动频率远高于 Base URL，硬编码只会制造新的过期数据；请用「加载模型目录」或手填。
+3. **不预填模型名**。模型 ID 的变动频率远高于 Base URL，硬编码只会制造新的过期数据；请填完地址后点「测试连接」拉取列表，或手填。
 
 地址拼接会自动识别"已含版本段"的情况：`https://open.bigmodel.cn/api/paas/v4` 不会再被补一层 `/v1`。
 
@@ -102,7 +104,7 @@ API Key 只存在后台上下文，**内容脚本永远拿不到**（`kc.config.
 ## 开发
 
 ```bash
-npm test        # 55 条单测，零依赖
+npm test        # 89 条单测，零依赖
 ./build.sh      # 产出 dist/{chrome,firefox}/*.zip
 ./build.sh dev  # 额外产出一份把 localhost:8000 加进 matches 的清单
 ```
